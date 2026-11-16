@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>نظام جرد الأصول والممتلكات – المستشفى السعودي الألماني</title>
+<style>
+:root{--bg:#f1f5f9;--card:#fff;--tx:#0f172a;--mu:#64748b;--pr:#1e5fa8;--bd:#d9e2ec;--ok:#16a34a;--wr:#d97706;--er:#dc2626;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0b1220;--card:#162033;--tx:#e6edf6;--mu:#94a3b8;--pr:#5aa2ee;--bd:#2a3a55}}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--tx);font-family:Tahoma,Arial,sans-serif;font-size:15px}
+header{background:var(--pr);color:#fff;padding:12px 14px;position:sticky;top:env(safe-area-inset-top,0px);z-index:5}
+header b{display:block;font-size:16px}header small{opacity:.85}
+nav{display:flex;overflow-x:auto;background:var(--card);border-bottom:1px solid var(--bd);position:sticky;top:calc(env(safe-area-inset-top,0px) + 56px);z-index:4}
+nav button{flex:1;min-width:84px;padding:12px 6px;border:0;background:none;color:var(--mu);font:inherit;border-bottom:3px solid transparent}
+nav button.on{color:var(--pr);border-color:var(--pr);font-weight:bold}
+main{padding:12px;max-width:900px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:10px}
+.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}@media(min-width:600px){.grid{grid-template-columns:repeat(4,1fr)}}
+.st{background:var(--card);border:1px solid var(--bd);border-radius:10px;padding:10px;text-align:center}.st b{display:block;font-size:22px;color:var(--pr)}.st span{color:var(--mu);font-size:12px}
+input,select,textarea{width:100%;padding:10px;border:1px solid var(--bd);border-radius:8px;background:var(--bg);color:var(--tx);font:inherit;margin:3px 0 8px}
+label{font-size:13px;color:var(--mu)}
+.btn{padding:10px 14px;border:0;border-radius:8px;background:var(--pr);color:#fff;font:inherit;margin:2px}.btn.g{background:var(--mu)}.btn.r{background:var(--er)}.btn.o{background:var(--ok)}
+.row{display:flex;gap:8px;flex-wrap:wrap}.row>*{flex:1;min-width:120px}
+.it{display:flex;justify-content:space-between;gap:8px;align-items:center}.it small{color:var(--mu);display:block}
+.tag{font-size:11px;padding:2px 7px;border-radius:9px;background:var(--bd);white-space:nowrap}
+.bar{height:10px;background:var(--bd);border-radius:5px;overflow:hidden;margin:3px 0 8px}.bar i{display:block;height:100%;background:var(--pr)}
+#toast{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 16px);left:50%;transform:translateX(-50%);background:#0f172a;color:#fff;padding:10px 16px;border-radius:20px;display:none;z-index:9}
+h3{margin:4px 0 8px}
+.th{width:46px;height:46px;object-fit:cover;border-radius:6px}.th.big{width:90px;height:90px;display:block;margin-bottom:6px}.th[hidden]{display:none!important}
+body.scanning{background:transparent!important}html:has(body.scanning){background:transparent}body.scanning>*:not(#scanov){display:none!important}
+#scanov{display:none;position:fixed;inset:0;align-items:flex-end;justify-content:center;padding:40px}
+</style></head><body>
+<header><b>النظام المركزي لإدارة وجرد الأصول والممتلكات</b><small>المستشفى السعودي الألماني · يعمل دون إنترنت</small></header>
+<nav id="nav"></nav><main id="app"></main><div id="toast"></div><div id="scanov"><button id="scancancel" class="btn r">إلغاء المسح</button></div>
+<script>
+const KEY='sgh_inventory_v1';
+const DEF_DEPTS=['الطوارئ','العناية المركزة ICU','العمليات','المختبر','الأشعة','الصيدلية','التنويم','العيادات الخارجية','الاستقبال','التمريض','الإدارة العامة','الموارد البشرية','المحاسبة','تقنية المعلومات IT','الهندسة الطبية','الصيانة','المستودعات','التعقيم المركزي','المغسلة','المطبخ','الأمن والسلامة','النظافة','أقسام أخرى'];
+const DEF_CATS={'الأجهزة الطبية':['أجهزة مراقبة المرضى','أجهزة التنفس الصناعي','أجهزة تخطيط القلب','أجهزة قياس الضغط','أجهزة ضخ المحاليل','أجهزة الشفط','أجهزة التعقيم','أجهزة الأشعة','أجهزة المختبر','أجهزة التخدير','أجهزة الصدمات الكهربائية','أخرى'],'الأثاث':['طاولات','مكاتب','كراسي','كراسي انتظار','كراسي متحركة','أسرة','خزائن','أدراج','رفوف','طاولات طبية','طاولات عمليات'],'التجهيزات الداخلية':['ستائر','ساعات حائط','مرايا','لوحات','سلال نفايات','حوامل محاليل','حوامل ملفات','ستائر تقسيم الأسرة'],'الأجهزة الكهربائية والإلكترونية':['كمبيوتر','شاشات','طابعات','تكييف','ثلاجات','مراوح','تلفزيون','هواتف','أجهزة شبكات','سيرفرات'],'الأدوات والمعدات':['عربات مرضى','عربات أدوية','عربات نظافة','أدوات صيانة','معدات سلامة','معدات تخزين','أدوات عمل']};
+const ST=['جديد','ممتاز','جيد','مقبول','يحتاج صيانة','معطل','تالف','خارج الخدمة','مفقود'];
+const INV=['لم يتم التحقق منه','تم التأكد من الوجود','غير موجود','موجود ويحتاج تحديث بيانات','موجود في موقع مختلف','تالف'];
+const ROLES=['مدير النظام','مدير الجرد','مسؤول القسم','موظف الجرد','مستخدم للعرض فقط'];
+let db;
+try{db=JSON.parse(localStorage.getItem(KEY))}catch(e){}
+if(!db)db={depts:DEF_DEPTS.map(n=>({n,rooms:[]})),cats:DEF_CATS,items:[],log:[],seq:0,last:null,user:'',role:ROLES[0]};
+let tab='dash',editId=null,q='',fd='',fs='',invDept='',draft=null;
+const $=s=>document.getElementById(s);
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function save(){try{localStorage.setItem(KEY,JSON.stringify(db))}catch(e){toast('تعذر الحفظ التلقائي – صدّر نسخة احتياطية الآن')}}
+function toast(m){const t=$('toast');t.textContent=m;t.style.display='block';setTimeout(()=>t.style.display='none',2500)}
+function log(a,it){db.log.unshift({t:new Date().toLocaleString('ar-SA'),u:db.user||'—',a,n:it})}
+function canEdit(){return db.role!==ROLES[4]}
+const TABS=[['dash','لوحة التحكم'],['list','الموجودات'],['add','إضافة'],['inv','بدء الجرد'],['rep','التقارير'],['set','النسخ والإعدادات']];
+function nav(){$('nav').innerHTML=TABS.map(t=>`<button class="${tab==t[0]?'on':''}" onclick="go('${t[0]}')">${t[1]}</button>`).join('')}
+function go(t){tab=t;if(t!='add'){editId=null;draft=null}render()}
+const sum=a=>a.reduce((s,i)=>s+(+i.qty||1),0);
+const isBad=i=>['معطل','تالف','خارج الخدمة'].includes(i.status);
+function render(){nav();$('app').innerHTML=({dash,list,add,inv,rep,set,maint:maintv,qrv})[tab]();window.scrollTo(0,0);thumbs()}
+function dash(){
+ const I=db.items,cs=Object.keys(db.cats);
+ const done=db.depts.filter(d=>{const x=I.filter(i=>i.dept==d.n);return x.length&&x.every(i=>i.inv=='تم التأكد من الوجود')}).length;
+ const s=[['الأقسام',db.depts.length],...cs.map(c=>[c,sum(I.filter(i=>i.cat==c))]),['إجمالي الموجودات',sum(I)],['عاملة',sum(I.filter(i=>['جديد','ممتاز','جيد','مقبول'].includes(i.status)))],['تحتاج صيانة',sum(I.filter(i=>i.status=='يحتاج صيانة'))],['معطلة/تالفة',sum(I.filter(isBad))],['مفقودة',sum(I.filter(i=>i.status=='مفقود'))],['أقسام اكتمل جردها',done],['أقسام لم يكتمل',db.depts.length-done]];
+ const mx=Math.max(1,...db.depts.map(d=>sum(I.filter(i=>i.dept==d.n))));
+ const old=!db.last||(Date.now()-db.last)>7*864e5;
+ return (old&&I.length?`<div class="card" style="border-color:var(--wr)">⚠️ لا توجد نسخة احتياطية حديثة. <a href="#" onclick="go('set');return false">أنشئ نسخة الآن</a></div>`:'')+
+ `<div class="grid">${s.map(x=>`<div class="st"><b>${x[1]}</b><span>${esc(x[0])}</span></div>`).join('')}</div>
+ <div class="card" style="margin-top:10px"><h3>الموجودات حسب القسم</h3>${db.depts.map(d=>{const n=sum(I.filter(i=>i.dept==d.n));return n?`<div>${esc(d.n)} <small>(${n})</small><div class="bar"><i style="width:${n/mx*100}%"></i></div></div>`:''}).join('')||'<small>لا توجد بيانات بعد. ابدأ بإضافة موجود.</small>'}</div>`}
+function list(){
+ const t=q.trim().toLowerCase();
+ const r=lastRes=db.items.filter(i=>(!fd||i.dept==fd)&&(!fs||i.status==fs)&&(!t||[i.name,i.sn,i.aid,i.dept,i.room,i.cat,i.sub,i.maker,i.model,i.status].join(' ').toLowerCase().includes(t)));
+ return `<div class="card"><div><button class="btn" onclick="scanSearch()">📷 مسح QR</button><button class="btn g" onclick="labels()">🏷️ ملصقات النتائج PDF</button></div><input id="q" placeholder="🔍 بحث: اسم، رقم تسلسلي، رقم أصل، قسم، غرفة…" value="${esc(q)}" oninput="q=this.value;lst()">
+ <div class="row"><select onchange="fd=this.value;lst()"><option value="">كل الأقسام</option>${db.depts.map(d=>`<option ${fd==d.n?'selected':''}>${esc(d.n)}</option>`).join('')}</select>
+ <select onchange="fs=this.value;lst()"><option value="">كل الحالات</option>${ST.map(s=>`<option ${fs==s?'selected':''}>${s}</option>`).join('')}</select></div></div><div id="res">${rows(r)}</div>`}
+function lst(){const f=$('q');const p=f.selectionStart;const h=list();$('res').innerHTML=h.slice(h.indexOf('<div id="res">')+14,h.lastIndexOf('</div>'));thumbs()}
+function rows(r){return r.length?`<small>${r.length} نتيجة</small>`+r.map(i=>`<div class="card"><div class="it"><img class="th" data-p="${i.aid}" hidden><div><b>${esc(i.name)}</b> ${i.qty>1?`× ${i.qty}`:''}<small>${esc(i.cat)} › ${esc(i.sub||'-')} · ${esc(i.dept)}${i.room?' › '+esc(i.room):''}</small><small>رقم الأصل: ${esc(i.aid)} ${i.sn?'· S/N: '+esc(i.sn):''}</small></div><span class="tag">${esc(i.status)}</span></div><div><button class="btn o" onclick="qr('${i.aid}')">QR</button><button class="btn" onclick="mnt('${i.aid}')">🔧 صيانة</button>${canEdit()?`<button class="btn" onclick="edit('${i.aid}')">تعديل</button><button class="btn g" onclick="dup('${i.aid}')">نسخ</button><button class="btn r" onclick="del('${i.aid}')">حذف</button>`:''}</div></div>`).join(''):'<div class="card"><small>لا توجد نتائج.</small></div>'}
+function opts(a,v){return a.map(x=>`<option ${x==v?'selected':''}>${esc(x)}</option>`).join('')}
+function add(){
+ if(!canEdit())return '<div class="card">صلاحيتك للعرض فقط.</div>';
+ const d=draft||(editId&&db.items.find(i=>i.aid==editId))||{};
+ const c=d.cat||Object.keys(db.cats)[0],dp=db.depts.find(x=>x.n==d.dept)||db.depts[0];
+ const f=(id,l,v,t)=>`<label>${l}</label><input id="f_${id}" type="${t||'text'}" value="${esc(v)}">`;
+ return `<div class="card"><h3>${editId?'تعديل موجود '+editId:'إضافة موجود'}</h3>
+ ${f('name','اسم الجهاز أو القطعة *',d.name)}
+ <div class="row"><div><label>التصنيف الرئيسي</label><select id="f_cat" onchange="chg()">${opts(Object.keys(db.cats),c)}</select></div>
+ <div><label>التصنيف الفرعي</label><input id="f_sub" list="subs" value="${esc(d.sub)}"><datalist id="subs">${db.cats[c].map(s=>`<option>${esc(s)}</option>`).join('')}</datalist></div></div>
+ <div class="row"><div><label>القسم</label><select id="f_dept" onchange="chg()">${opts(db.depts.map(x=>x.n),dp.n)}</select></div>
+ <div><label>الغرفة / الموقع</label><input id="f_room" list="rms" value="${esc(d.room)}"><datalist id="rms">${dp.rooms.map(s=>`<option>${esc(s)}</option>`).join('')}</datalist></div></div>
+ <div class="row">${f('maker','الشركة المصنعة',d.maker)}${f('model','الموديل',d.model)}</div>
+ ${f('sn','الرقم التسلسلي (اختياري – يجب أن يكون فريداً)',d.sn)}<button class="btn" onclick="scanInto()">📷 مسح باركود</button>
+ <div class="row">${f('qty','الكمية',d.qty||1,'number')}${f('unit','الوحدة',d.unit||'قطعة')}</div>
+ <div class="row">${f('buy','تاريخ الشراء',d.buy,'date')}${f('run','تاريخ التشغيل',d.run,'date')}</div>
+ <label>الحالة</label><select id="f_status">${opts(ST,d.status||'جيد')}</select>
+ ${f('cust','المسؤول عن العهدة',d.cust)}
+ <label>الصورة</label><div><img id="ph" class="th big" data-p="${esc(editId||'')}" hidden><button class="btn" onclick="snap()">📷 تصوير</button></div><label>ملاحظات</label><textarea id="f_note" rows="2">${esc(d.note)}</textarea>
+ <button class="btn o" onclick="saveItem(false)">💾 حفظ</button>${editId?'':'<button class="btn" onclick="saveItem(true)">حفظ وإضافة مشابه</button>'}<button class="btn g" onclick="go('list')">إلغاء</button></div>`}
+function chg(){draft=read();render()}
+function read(){const g=k=>$('f_'+k).value.trim();return{name:g('name'),cat:g('cat'),sub:g('sub'),dept:g('dept'),room:g('room'),maker:g('maker'),model:g('model'),sn:g('sn'),qty:+g('qty')||1,unit:g('unit'),buy:g('buy'),run:g('run'),status:g('status'),cust:g('cust'),note:g('note')}}
+function saveItem(again){
+ const d=read();if(!d.name)return toast('اسم القطعة مطلوب');
+ if(d.sn&&db.items.some(i=>i.sn&&i.sn.toLowerCase()==d.sn.toLowerCase()&&i.aid!=editId))return toast('⚠️ الرقم التسلسلي مسجل مسبقاً');
+ const dp=db.depts.find(x=>x.n==d.dept);if(d.room&&dp&&!dp.rooms.includes(d.room))dp.rooms.push(d.room);
+ if(d.sub&&!db.cats[d.cat].includes(d.sub))db.cats[d.cat].push(d.sub);
+ if(editId){const i=db.items.find(x=>x.aid==editId);Object.assign(i,d);log('تعديل',i.name+' '+i.aid)}
+ else{const i=Object.assign(d,{aid:'AST-'+String(++db.seq).padStart(6,'0'),inv:'لم يتم التحقق منه',by:db.user});db.items.push(i);log('إضافة',i.name+' '+i.aid)}
+ {const _a=editId||db.items[db.items.length-1].aid;if(pendingPhoto&&window.NX){NX.photoPut(_a,pendingPhoto);db.items.find(x=>x.aid==_a).photo=1;pendingPhoto=null}}save();toast('✔ تم الحفظ');
+ if(again&&!editId){draft=Object.assign({},d,{sn:''});render()}else{editId=null;draft=null;go('list')}}
+function edit(a){editId=a;draft=null;tab='add';render()}
+function dup(a){const i=db.items.find(x=>x.aid==a);draft=Object.assign({},i,{sn:''});editId=null;tab='add';render()}
+function del(a){const i=db.items.find(x=>x.aid==a);if(!confirm('حذف «'+i.name+'» نهائياً؟'))return;db.items=db.items.filter(x=>x.aid!=a);log('حذف',i.name+' '+a);save();toast('تم الحذف');render()}
+function inv(){
+ const x=db.items.filter(i=>i.dept==invDept);
+ return `<div class="card"><h3>بدء عملية الجرد</h3><label>القسم</label><select onchange="invDept=this.value;render()"><option value="">— اختر القسم —</option>${db.depts.map(d=>`<option ${invDept==d.n?'selected':''}>${esc(d.n)}</option>`).join('')}</select>
+ <label>اسم موظف الجرد</label><input value="${esc(db.user)}" onchange="db.user=this.value;save()"></div>
+ ${invDept?`<small>تم تأكيد ${x.filter(i=>i.inv=='تم التأكد من الوجود').length} من ${x.length}</small>`:''}
+ ${x.map(i=>`<div class="card"><b>${esc(i.name)}</b><small>${esc(i.room||'')} · ${esc(i.aid)}</small><select onchange="setInv('${i.aid}',this.value)">${opts(INV,i.inv)}</select>${i.invDate?`<small>آخر جرد: ${esc(i.invDate)} – ${esc(i.invBy||'')}</small>`:''}</div>`).join('')}`}
+function setInv(a,v){const i=db.items.find(x=>x.aid==a);i.inv=v;i.invDate=new Date().toLocaleDateString('ar-SA');i.invBy=db.user;if(v=='غير موجود')i.status='مفقود';if(v=='تالف')i.status='تالف';log('جرد: '+v,i.name+' '+a);save();toast('تم الحفظ')}
+const REPS={'الجرد الشامل':()=>1,'الأجهزة المعطلة':i=>isBad(i),'تحتاج صيانة':i=>i.status=='يحتاج صيانة','المفقودات':i=>i.status=='مفقود','بدون رقم تسلسلي':i=>!i.sn,'لم يتم جردها':i=>i.inv!='تم التأكد من الوجود','سجل الصيانة':i=>(i.maint||[]).length,'الأجهزة الطبية':i=>i.cat=='الأجهزة الطبية','الأثاث':i=>i.cat=='الأثاث','الأجهزة الإلكترونية':i=>i.cat=='الأجهزة الكهربائية والإلكترونية','التجهيزات الداخلية':i=>i.cat=='التجهيزات الداخلية'};
+function rep(){return `<div class="card"><h3>التقارير (Excel / PDF)</h3><label>القسم</label><select onchange="repDept=this.value;render()"><option value="">كل الأقسام</option>${db.depts.map(d=>`<option ${repDept==d.n?'selected':''}>${esc(d.n)}</option>`).join('')}</select>${Object.keys(REPS).map(k=>`<div class="it" style="margin:8px 0"><span>${k} <small>${db.items.filter(REPS[k]).length} سجل</small></span><span><button class="btn" onclick="xl('${k}')">Excel</button><button class="btn g" onclick="pdf('${k}')">PDF</button></span></div>`).join('')}</div>`}
+function csv(k){const H=['رقم الأصل','الاسم','التصنيف','الفرعي','القسم','الغرفة','الشركة','الموديل','الرقم التسلسلي','الكمية','الحالة','حالة الجرد','ملاحظات'];
+ const R=db.items.filter(REPS[k]).map(i=>[i.aid,i.name,i.cat,i.sub,i.dept,i.room,i.maker,i.model,i.sn,i.qty,i.status,i.inv,i.note]);
+ dl('\ufeff'+[H,...R].map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\r\n'),k+'.csv','text/csv')}
+function dl(txt,name,type){saveFile(name,txt)}
+function set(){return `<div class="card"><h3>النسخ الاحتياطي</h3><small>آخر نسخة: ${db.last?new Date(db.last).toLocaleString('ar-SA'):'لم تُنشأ بعد'}</small><br>
+ <button class="btn o" onclick="backup()">💾 إنشاء نسخة احتياطية</button><label class="btn g" style="display:inline-block">📂 استعادة من ملف<input type="file" accept=".json" hidden onchange="restore(this.files[0])"></label></div>
+ <div class="card"><h3>المستخدم والصلاحية</h3><label>الاسم</label><input value="${esc(db.user)}" onchange="db.user=this.value;save()"><label>الدور</label><select onchange="db.role=this.value;save();render()">${opts(ROLES,db.role)}</select></div>
+ <div class="card"><h3>الأقسام</h3><div class="row"><input id="nd" placeholder="اسم قسم جديد"><button class="btn" onclick="addDept()">إضافة</button></div>
+ <label>تصنيف رئيسي جديد</label><div class="row"><input id="nc" placeholder="اسم التصنيف"><button class="btn" onclick="addCat()">إضافة</button></div></div>
+ <div class="card"><h3>سجل العمليات</h3>${db.log.slice(0,30).map(l=>`<small>${esc(l.t)} · ${esc(l.u)} · ${esc(l.a)}: ${esc(l.n)}</small>`).join('')||'<small>فارغ</small>'}</div>`}
+async function backup(){const ph=window.NX?await NX.photoAll():{};await saveFile('sgh-inventory-backup-'+new Date().toISOString().slice(0,10)+'.json',JSON.stringify(Object.assign({},db,{_photos:ph})),true);db.last=Date.now();save();render();toast('تم إنشاء النسخة')}
+function restore(f){if(!f)return;const r=new FileReader();r.onload=()=>{try{const d=JSON.parse(r.result);if(!d.items||!d.depts)throw 0;if(!confirm('سيتم استبدال البيانات الحالية بالنسخة ('+d.items.length+' موجود). متابعة؟'))return;if(d._photos&&window.NX)NX.photoSet(d._photos);delete d._photos;db=d;save();render();toast('تمت الاستعادة')}catch(e){toast('ملف غير صالح')}};r.readAsText(f)}
+function addDept(){const v=$('nd').value.trim();if(!v||db.depts.some(d=>d.n==v))return;db.depts.push({n:v,rooms:[]});save();render()}
+function addCat(){const v=$('nc').value.trim();if(!v||db.cats[v])return;db.cats[v]=[];save();render()}
+let lastRes=[],repDept='',curM=null,qrA=null,pendingPhoto=null;
+const NXok=()=>window.NX||(toast('هذه الميزة تعمل في تطبيق Android'),null);
+async function saveFile(n,d,keep){if(window.NX)return NX.save(n,d,keep);const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([d]));a.download=n;a.click()}
+function thumbs(){document.querySelectorAll('img[data-p]').forEach(async im=>{const id=im.dataset.p;if(!id||!window.NX)return;const u=await NX.photoGet(id);if(u){im.src=u;im.hidden=false}})}
+async function snap(){if(!NXok())return;try{pendingPhoto=await NX.photo();const m=$('ph');m.src=pendingPhoto;m.hidden=false}catch(e){}}
+async function scanInto(){if(!NXok())return;const v=await NX.scan();if(v)$('f_sn').value=v}
+async function scanSearch(){if(!NXok())return;const v=await NX.scan();if(v){q=v;go('list')}}
+function tbl(k){const H=['رقم الأصل','الاسم','التصنيف','الفرعي','القسم','الغرفة','الشركة','الموديل','الرقم التسلسلي','الكمية','الحالة','حالة الجرد','آخر صيانة','الصيانة القادمة','ملاحظات'];
+ const R=db.items.filter(i=>REPS[k](i)&&(!repDept||i.dept==repDept)).map(i=>{const m=(i.maint||[]).slice(-1)[0]||{};return[i.aid,i.name,i.cat,i.sub,i.dept,i.room,i.maker,i.model,i.sn,i.qty,i.status,i.inv,m.date||'',m.next||'',i.note]});return{H,R}}
+async function xl(k){const t=tbl(k);if(window.NX)await NX.xlsx(k,t.H,t.R);else saveFile(k+'.csv','\ufeff'+[t.H,...t.R].map(r=>r.map(c=>'"'+String(c==null?'':c).replace(/"/g,'""')+'"').join(',')).join('\r\n'))}
+async function pdf(k){if(!NXok())return;const t=tbl(k),c=[0,1,4,5,8,10,11];toast('جارٍ إنشاء PDF…');
+ const th=c.map(j=>`<th style="border:1px solid #888;padding:4px;background:#e2e8f0">${t.H[j]}</th>`).join('');
+ const rows=t.R.map(r=>'<tr>'+c.map(j=>`<td style="border:1px solid #aaa;padding:4px">${esc(r[j])}</td>`).join('')+'</tr>');
+ const pages=[];for(let p=0;p<Math.max(1,rows.length);p+=32)pages.push(`<h3>المستشفى السعودي الألماني – تقرير ${esc(k)}</h3><small>${new Date().toLocaleDateString('ar-SA')} · ${t.R.length} سجل · صفحة ${p/32+1}</small><table style="width:100%;border-collapse:collapse;font-size:11px"><tr>${th}</tr>${rows.slice(p,p+32).join('')}</table>`);
+ await NX.pdf(k,pages)}
+async function labels(){if(!NXok())return;const L=lastRes;if(!L.length)return toast('لا توجد موجودات');toast('جارٍ إنشاء الملصقات…');
+ const cells=await Promise.all(L.map(async i=>`<div style="border:1px solid #333;padding:8px;text-align:center;width:31%;display:inline-block;margin:1%;vertical-align:top"><img src="${await NX.qr(i.aid)}" width="120" height="120"><div style="font-weight:bold;font-size:13px">${esc(i.aid)}</div><div style="font-size:11px">${esc(i.name)}</div><div style="font-size:10px">${esc(i.dept)}</div></div>`));
+ const pages=[];for(let k=0;k<cells.length;k+=12)pages.push('<div style="text-align:center">'+cells.slice(k,k+12).join('')+'</div>');await NX.pdf('ملصقات-QR',pages)}
+async function qr(a){qrA=a;tab='qrv';render();if(window.NX){const u=await NX.qr(a,300);const m=$('qri');if(m)m.src=u}}
+function qrv(){const i=db.items.find(x=>x.aid==qrA);return `<div class="card" style="text-align:center"><h3>${esc(i.name)}</h3><img id="qri" width="220" height="220" style="background:#fff;padding:8px"><div><b>${esc(i.aid)}</b></div><small>${esc(i.dept)} ${esc(i.room||'')}</small><div style="margin-top:10px"><button class="btn o" onclick="qrSave()">💾 حفظ كصورة</button><button class="btn" onclick="labelOne()">🏷️ ملصق PDF</button><button class="btn g" onclick="go('list')">رجوع</button></div></div>`}
+async function qrSave(){if(!NXok())return;const u=await NX.qr(qrA,500);await NX.save(qrA+'.png',{b64:u.split(',')[1]})}
+async function labelOne(){lastRes=db.items.filter(x=>x.aid==qrA);await labels()}
+function mnt(a){curM=a;tab='maint';render()}
+function maintv(){const i=db.items.find(x=>x.aid==curM),m=i.maint||[];const f=(id,l,t)=>`<label>${l}</label><input id="m_${id}" type="${t||'text'}">`;
+ return `<div class="card"><h3>🔧 صيانة: ${esc(i.name)} <small>${esc(i.aid)}</small></h3>${canEdit()?`${f('date','تاريخ الصيانة','date')}${f('type','نوع العطل')}<label>وصف المشكلة</label><textarea id="m_desc" rows="2"></textarea>${f('action','الإجراء المتخذ')}${f('cost','التكلفة','number')}${f('tech','اسم الفني')}${f('next','تاريخ الصيانة القادمة','date')}<button class="btn o" onclick="addM()">حفظ السجل</button>`:''}<button class="btn g" onclick="go('list')">رجوع</button></div>`+m.slice().reverse().map(x=>`<div class="card"><b>${esc(x.date)}</b> · ${esc(x.type)}<small>${esc(x.desc)}</small><small>الإجراء: ${esc(x.action)} · التكلفة: ${esc(x.cost)} · الفني: ${esc(x.tech)}</small><small>القادمة: ${esc(x.next||'-')}</small></div>`).join('')}
+function addM(){const g=k=>$('m_'+k).value.trim();const i=db.items.find(x=>x.aid==curM);(i.maint=i.maint||[]).push({date:g('date')||new Date().toISOString().slice(0,10),type:g('type'),desc:g('desc'),action:g('action'),cost:g('cost'),tech:g('tech'),next:g('next')});log('صيانة',i.name+' '+i.aid);save();toast('✔ تم حفظ سجل الصيانة');render()}
+
+render();
+</script><script type="module" src="/src/native.js"></script></body></html>

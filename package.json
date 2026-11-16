@@ -1,0 +1,3 @@
+{"name":"sgh-inventory","version":"1.0.0","private":true,"type":"module","scripts":{"build":"vite build"},
+"dependencies":{"@capacitor/core":"^6.1.0","@capacitor/android":"^6.1.0","@capacitor/camera":"^6.0.2","@capacitor/filesystem":"^6.0.1","@capacitor/share":"^6.0.2","@capacitor-mlkit/barcode-scanning":"^6.1.0","qrcode":"^1.5.4","xlsx":"^0.18.5","html2canvas":"^1.4.1","jspdf":"^2.5.2"},
+"devDependencies":{"@capacitor/cli":"^6.1.0","vite":"^5.4.0"}}
